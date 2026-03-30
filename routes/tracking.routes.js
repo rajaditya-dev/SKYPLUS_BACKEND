@@ -34,6 +34,9 @@ router.post("/tracking/location", async (req, res) => {
 
     const pool = getPool();
 
+    console.log("TRACKING INSERT TARGET:", "dbo.TrackingLocations");
+    console.log("TRACKING PAYLOAD:", p);
+
     await pool
       .request()
       .input("Fold", sql.NVarChar(100), p.FoId)
@@ -46,14 +49,14 @@ router.post("/tracking/location", async (req, res) => {
       .input("Bearing", sql.Float, p.Bearing)
       .query(`
         INSERT INTO dbo.TrackingLocations
-          (Fold, DriverId, Latitude, Longitude, Accuracy, Timestamp, Speed, Bearing)
+          ([Fold], [DriverId], [Latitude], [Longitude], [Accuracy], [Timestamp], [Speed], [Bearing])
         VALUES
           (@Fold, @DriverId, @Latitude, @Longitude, @Accuracy, @Timestamp, @Speed, @Bearing)
       `);
 
     return res.status(204).end();
   } catch (e) {
-    console.error("SKY+ receiver error:", e);
+    console.error("SKY+ receiver error:", e?.message || e, e);
     return res.status(500).json({ error: String(e?.message || e) });
   }
 });
@@ -64,23 +67,22 @@ router.get("/tracking/latest", async (req, res) => {
     if (!Fold) return res.status(400).json({ error: "FoId required" });
 
     const pool = getPool();
-
     const result = await pool
       .request()
       .input("Fold", sql.NVarChar(100), Fold)
       .query(`
         SELECT TOP 1
-          Fold,
-          DriverId,
-          Latitude,
-          Longitude,
-          Accuracy,
-          Timestamp,
-          Speed,
-          Bearing
+          [Fold],
+          [DriverId],
+          [Latitude],
+          [Longitude],
+          [Accuracy],
+          [Timestamp],
+          [Speed],
+          [Bearing]
         FROM dbo.TrackingLocations
-        WHERE Fold = @Fold
-        ORDER BY Timestamp DESC, ID DESC
+        WHERE [Fold] = @Fold
+        ORDER BY [Timestamp] DESC, [ID] DESC
       `);
 
     const row = result.recordset[0];
@@ -97,7 +99,7 @@ router.get("/tracking/latest", async (req, res) => {
       Bearing: row.Bearing,
     });
   } catch (e) {
-    console.error("SKY+ latest error:", e);
+    console.error("SKY+ latest error:", e?.message || e, e);
     return res.status(500).json({ error: String(e?.message || e) });
   }
 });
@@ -109,24 +111,23 @@ router.get("/tracking/history", async (req, res) => {
 
     const limit = Math.max(1, Math.min(2000, Number(req.query.limit) || 300));
     const pool = getPool();
-
     const result = await pool
       .request()
       .input("Fold", sql.NVarChar(100), Fold)
       .input("Limit", sql.Int, limit)
       .query(`
         SELECT TOP (@Limit)
-          Fold,
-          DriverId,
-          Latitude,
-          Longitude,
-          Accuracy,
-          Timestamp,
-          Speed,
-          Bearing
+          [Fold],
+          [DriverId],
+          [Latitude],
+          [Longitude],
+          [Accuracy],
+          [Timestamp],
+          [Speed],
+          [Bearing]
         FROM dbo.TrackingLocations
-        WHERE Fold = @Fold
-        ORDER BY Timestamp DESC, ID DESC
+        WHERE [Fold] = @Fold
+        ORDER BY [Timestamp] DESC, [ID] DESC
       `);
 
     const rows = result.recordset.reverse().map((row) => ({
@@ -142,7 +143,7 @@ router.get("/tracking/history", async (req, res) => {
 
     return res.json(rows);
   } catch (e) {
-    console.error("SKY+ history error:", e);
+    console.error("SKY+ history error:", e?.message || e, e);
     return res.status(500).json({ error: String(e?.message || e) });
   }
 });
