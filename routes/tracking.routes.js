@@ -45,7 +45,7 @@ router.post("/tracking/location", async (req, res) => {
       .input("Speed", sql.Float, p.Speed)
       .input("Bearing", sql.Float, p.Bearing)
       .query(`
-        INSERT INTO TrackingLocations
+        INSERT INTO dbo.TrackingLocations
           (Fold, DriverId, Latitude, Longitude, Accuracy, Timestamp, Speed, Bearing)
         VALUES
           (@Fold, @DriverId, @Latitude, @Longitude, @Accuracy, @Timestamp, @Speed, @Bearing)
@@ -78,7 +78,7 @@ router.get("/tracking/latest", async (req, res) => {
           Timestamp,
           Speed,
           Bearing
-        FROM TrackingLocations
+        FROM dbo.TrackingLocations
         WHERE Fold = @Fold
         ORDER BY Timestamp DESC, ID DESC
       `);
@@ -124,7 +124,7 @@ router.get("/tracking/history", async (req, res) => {
           Timestamp,
           Speed,
           Bearing
-        FROM TrackingLocations
+        FROM dbo.TrackingLocations
         WHERE Fold = @Fold
         ORDER BY Timestamp DESC, ID DESC
       `);
