@@ -26,6 +26,7 @@ app.use(cors({
     "https://gentle-glacier-0aa062d03.4.azurestaticapps.net",
     "http://localhost:5173",
     "http://localhost:4004",
+    "http://localhost:3000",
     "http://localhost:5001"
   ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
