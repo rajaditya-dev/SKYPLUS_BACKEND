@@ -10,7 +10,7 @@ export async function receiveEvent(req, res) {
       return res.status(400).json({ error: "FoId & Action & StopId required" });
     }
 
-    //await saveSkyEvent(req.body);
+    await saveSkyEvent(req.body);
     const tmRes = await postEventToTM(req.body);
     res.json(tmRes);
 
