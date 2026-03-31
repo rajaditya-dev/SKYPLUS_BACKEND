@@ -72,6 +72,7 @@ export async function syncAndGetEventsByFoId(foId) {
     console.log("keys:", Object.keys(ev));
     console.log("Timestamp:", ev.Timestamp);
     const e = parseSapEvent(ev);
+    const effectiveTime = e.ActualReportedTime ?? e.PlannedTime ?? null;
 
     await pool.request()
       .input("FoId", sql.NVarChar, e.FoId)
@@ -86,6 +87,7 @@ export async function syncAndGetEventsByFoId(foId) {
       .input("Items", sql.NVarChar(sql.MAX), e.Items)
       .input("ActualReportedTime", sql.DateTime, e.ActualReportedTime)
       .input("PlannedTime", sql.DateTime, e.PlannedTime)
+      .input("EffectiveTime", sql.DateTime, effectiveTime)
       .input("Latitude", sql.Decimal(18, 10), e.Latitude)
       .input("Longitude", sql.Decimal(18, 10), e.Longitude)
       .input("Location", sql.NVarChar, e.Location)
@@ -94,14 +96,24 @@ export async function syncAndGetEventsByFoId(foId) {
         USING (
           SELECT
             @FoId FoId,
+            @StopId StopId,
             @Location Location,
             @Event Event,
-            @ActualReportedTime ActualReportedTime
+            @EffectiveTime EffectiveTime
         ) AS S
         ON T.FoId = S.FoId
-        AND T.Location = S.Location
-        AND T.Event = S.Event
-        AND T.ActualReportedTime = S.ActualReportedTime
+        AND ISNULL(T.StopId, '') = ISNULL(S.StopId, '')
+        AND ISNULL(T.Location, '') = ISNULL(S.Location, '')
+        AND ISNULL(T.Event, '') = ISNULL(S.Event, '')
+        AND (
+          ISNULL(T.ActualReportedTime, T.PlannedTime) = S.EffectiveTime
+          OR (
+            ISNULL(T.ActualReportedTime, T.PlannedTime) IS NULL
+            AND S.EffectiveTime IS NULL
+          )
+        )
+
+
         WHEN NOT MATCHED THEN
           INSERT (
             FoId, StopId, Event, Action, EventCode, EvtReasonCode,
