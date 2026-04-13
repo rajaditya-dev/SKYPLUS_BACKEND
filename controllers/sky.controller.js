@@ -1,5 +1,4 @@
 //backend/controllers/sky.controller.js
-import { saveSkyEvent } from "../services/events.service.js";
 import { postDelayToTM, postPODToTM,postUnloadingToTM } from "../services/tm.service.js";
 import { postEventToTM } from "../services/tm.service.js";
 import { updateSkyByFoId } from "../services/tmToAzure.service.js";
@@ -10,8 +9,13 @@ export async function receiveEvent(req, res) {
       return res.status(400).json({ error: "FoId & Action & StopId required" });
     }
 
-    await saveSkyEvent(req.body);
     const tmRes = await postEventToTM(req.body);
+  //   const tmRes = await postEventToTM({
+  //    FoId,
+  //    Action,
+  //    StopId
+  // });
+
     res.json(tmRes);
 
   } catch (err) {
@@ -42,20 +46,6 @@ export async function receiveDelay(req, res) {
     // 1️⃣ Send to TM
     const { etaDate } = await postDelayToTM(payload);
 
-    // 2️⃣ Save to SQL
-/*await saveSkyEvent({
-  FoId: payload.FoId,
-  StopId: payload.StopId,
-  Event: payload.RefEvent ?? "DELAY",
-  EventCode: payload.EventCode,
-  EvtReasonCode: payload.EvtReasonCode,
-  Description: payload.Description,
-  ETA: payload.ETA,
-  Longitude: payload.Longitude,
-  Latitude: payload.Latitude
-});*/
-
-
     res.json(payload);
 
   } catch (err) {
@@ -72,7 +62,6 @@ export async function receivePOD(req, res) {
       return res.status(400).json({ error: "FoId & StopId required" });
     }
 
-    //await saveSkyEvent(req.body);
     const tmRes = await postPODToTM(req.body);
     res.json(tmRes);
 
@@ -88,7 +77,6 @@ export async function recieveUnloading(req, res) {
       return res.status(400).json({ error: "FoId & StopId required" });
     }
 
-    //await saveSkyEvent(req.body);
     const tmRes = await postUnloadingToTM(req.body);
     res.json(tmRes);
 
