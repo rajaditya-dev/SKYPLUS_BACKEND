@@ -1,7 +1,9 @@
 import sql from "mssql";
 import { getPool } from "../config/db.js";
 import { fetchEventsReportingSet } from "./tm.service.js";
-import { parseSapEvent } from "./tmParser.service.js";
+// import { parseSapEvent } from "./tmParser.service.js";
+import { parseSapEvent, sapTimestampToDate } from "./tmParser.service.js";
+
 function etaStringToDate(eta) {
   if (!eta) return null;
 
@@ -34,29 +36,64 @@ export async function saveSkyEvent(data) {
 
   const etaDate = etaStringToDate(data.ETA);
 
-  console.log("🕒 ETA RAW:", data.ETA);
-  console.log("🕒 ETA PARSED:", etaDate);
+  const eventName =
+    String(data.Event ?? "").trim() ||
+    (data.Action === "ARRV"
+      ? "Arrival at destination"
+      : data.Action === "DEPT"
+        ? "Departure"
+        : data.Action === "POD"
+          ? "Proof of delivery"
+          : String(data.Action ?? "").trim() || null);
+
+  const actualReportedTime = data.ActualReportedTime
+    ? new Date(data.ActualReportedTime)
+    : data.Timestamp
+      ? sapTimestampToDate(data.Timestamp)
+      : new Date();
+
+
+  const plannedTime = data.PlannedTime
+    ? new Date(data.PlannedTime)
+    : etaDate;
+
+  const location = data.Location ?? data.StopId ?? null;
+
+  console.log("ETA RAW:", data.ETA);
+  console.log("ETA PARSED:", etaDate);
 
   await pool.request()
     .input("FoId", sql.NVarChar, data.FoId)
     .input("Latitude", sql.Decimal(18, 10), data.Latitude ?? null)
     .input("Longitude", sql.Decimal(18, 10), data.Longitude ?? null)
     .input("StopId", sql.NVarChar, data.StopId ?? null)
-    .input("Event", sql.NVarChar, data.Event ?? null)
+    .input("Event", sql.NVarChar, eventName)
     .input("Action", sql.NVarChar, data.Action ?? null)
     .input("EventCode", sql.NVarChar, data.EventCode ?? null)
     .input("EvtReasonCode", sql.NVarChar, data.EvtReasonCode ?? null)
     .input("Description", sql.NVarChar, data.Description ?? null)
-    .input("ETA", sql.DateTime2, etaDate)   // ✅ JS Date
+    .input("ETA", sql.DateTime2, etaDate)
     .input("Discrepency", sql.NVarChar, data.Discrepency ?? null)
     .input("Items", sql.NVarChar(sql.MAX), data.Items ?? null)
+    .input("Location", sql.NVarChar, location)
+    .input("ActualReportedTime", sql.DateTime, actualReportedTime)
+    .input("PlannedTime", sql.DateTime, plannedTime)
     .query(`
       INSERT INTO Events
-      (FoId, StopId, Event, Action, EventCode, EvtReasonCode, Description, ETA, Discrepency, Items,Latitude,Longitude)
+      (
+        FoId, StopId, Event, Action, EventCode, EvtReasonCode,
+        Description, ETA, Discrepency, Items,
+        Latitude, Longitude, Location, ActualReportedTime, PlannedTime
+      )
       VALUES
-      (@FoId, @StopId, @Event, @Action, @EventCode, @EvtReasonCode, @Description, @ETA, @Discrepency, @Items,@Latitude,@Longitude)
+      (
+        @FoId, @StopId, @Event, @Action, @EventCode, @EvtReasonCode,
+        @Description, @ETA, @Discrepency, @Items,
+        @Latitude, @Longitude, @Location, @ActualReportedTime, @PlannedTime
+      )
     `);
 }
+
 
 
 export async function syncAndGetEventsByFoId(foId) {
@@ -131,14 +168,24 @@ export async function syncAndGetEventsByFoId(foId) {
   }
 
   // 3️⃣ Return events FROM DB (single source for UI)
-  const result = await pool.request()
-    .input("FoId", sql.NVarChar, foId)
-    .query(`
-      SELECT *
-      FROM dbo.Events
-      WHERE FoId = @FoId
-      ORDER BY ActualReportedTime
-    `);
+  // const result = await pool.request()
+  //   .input("FoId", sql.NVarChar, foId)
+  //   .query(`
+  //     SELECT *
+  //     FROM dbo.Events
+  //     WHERE FoId = @FoId
+  //     ORDER BY ActualReportedTime
+  //   `);
 
-  return result.recordset;
+  // return result.recordset;
+
+   // 3. Return TM events directly, not DB rows
+  return sapEvents.map((ev, index) => {
+    const e = parseSapEvent(ev);
+    return {
+      id: `${e.FoId || foId}|${e.StopId || ""}|${ev.Timestamp || ev.PlanTimestamp || index}`,
+      ...e,
+    };
+  });
+
 }
