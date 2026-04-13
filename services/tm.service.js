@@ -49,7 +49,7 @@ export async function fetchEventsReportingSet(foId) {
 /* ================= EVENT → TM ================= */
 
 export async function postEventToTM(payload) {
-  const { FoId, Action, StopId, Latitude, Longitude } = payload;
+  const { FoId, Action, StopId, Latitude, Longitude, Timestamp } = payload;
 
   if (!FoId || !Action || !StopId ) {
     throw new Error("FoId & Action required for TM Event");
@@ -62,7 +62,8 @@ export async function postEventToTM(payload) {
     Action: String(Action).trim(),
     StopId: String(StopId ?? "").trim(),
     Latitude:Latitude,
-    Longitude:Longitude
+    Longitude:Longitude,
+    Timestamp: Timestamp
   };
 
   const url =
@@ -70,6 +71,7 @@ export async function postEventToTM(payload) {
     (SAP_CLIENT ? `?sap-client=${SAP_CLIENT}` : "");
 
   const result = await axios.post(url, tmPayload, {
+    
     headers: {
       Authorization: `Basic ${process.env.SAP_BASIC}`,
       "x-csrf-token": token,
@@ -80,6 +82,9 @@ export async function postEventToTM(payload) {
     },
     validateStatus: () => true
   });
+
+   console.log("TM POST REQUEST PAYLOAD:", tmPayload);
+   console.log("TM POST RAW RESPONSE:", JSON.stringify(result.data, null, 2));
 
   if (result.status >= 400) {
     throw new Error(
@@ -107,7 +112,8 @@ export async function postDelayToTM(payload) {
     EvtReasonCode: String(payload.EvtReasonCode ?? "").trim(),
     Description: String(payload.Description ?? "").trim(),
     Latitude:String(payload.Latitude),
-    Longitude:String(payload.Longitude )
+    Longitude:String(payload.Longitude ),
+    Timestamp: payload.Timestamp
   };
 
   const url =
@@ -135,7 +141,7 @@ export async function postDelayToTM(payload) {
 
 
 export async function postPODToTM(payload) {
-  const { FoId, StopId, Discrepency, Items ,Latitude, Longitude } = payload;
+  const { FoId, StopId, Discrepency, Items ,Latitude, Longitude, Timestamp } = payload;
 
   if (!FoId || !StopId) {
     throw new Error("FoId & StopId required for POD");
@@ -149,7 +155,8 @@ export async function postPODToTM(payload) {
     Discrepency: String(Discrepency ?? "").trim(),
     Items: String(Items ?? "").trim(),
     Latitude:String(Latitude),
-    Longitude:String(Longitude)
+    Longitude:String(Longitude),
+    Timestamp: Timestamp
   };
 
   console.log("FINAL POD PAYLOAD >>>", tmPayload); // debug once
@@ -178,7 +185,7 @@ export async function postPODToTM(payload) {
 }
 
 export async function postUnloadingToTM(payload) {
-  const { FoId, StopId, Latitude, Longitude } = payload;
+  const { FoId, StopId, Latitude, Longitude, Timestamp } = payload;
 
   if (!FoId || !StopId) {
     throw new Error("FoId & StopId required for Unloading");
@@ -190,7 +197,8 @@ export async function postUnloadingToTM(payload) {
     FoId: String(FoId).trim(),
     StopId: String(StopId).trim(),
     Latitude:String(Latitude),
-    Longitude:String(Longitude)
+    Longitude:String(Longitude),
+    Timestamp: Timestamp
   };
 
   console.log("FINAL UNLOADING PAYLOAD >>>", tmPayload); // debug once
@@ -211,12 +219,17 @@ export async function postUnloadingToTM(payload) {
     }
   );
 
+  
+
   if (result.status >= 400) {
     throw new Error(`TM UNLOADING failed: ${JSON.stringify(result.data)}`);
   }
 
   return result.data;
 }
+
+
+
 
 
 
