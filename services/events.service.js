@@ -2,7 +2,7 @@ import sql from "mssql";
 import { getPool } from "../config/db.js";
 import { fetchEventsReportingSet } from "./tm.service.js";
 // import { parseSapEvent } from "./tmParser.service.js";
-import { parseSapEvent, sapTimestampToDate } from "./tmParser.service.js";
+import { parseSapEvent, sapTimestampUtcToDate } from "./tmParser.service.js";
 
 function etaStringToDate(eta) {
   if (!eta) return null;
@@ -49,7 +49,7 @@ export async function saveSkyEvent(data) {
   const actualReportedTime = data.ActualReportedTime
     ? new Date(data.ActualReportedTime)
     : data.Timestamp
-      ? sapTimestampToDate(data.Timestamp)
+      ? sapTimestampUtcToDate(data.Timestamp)
       : new Date();
 
 

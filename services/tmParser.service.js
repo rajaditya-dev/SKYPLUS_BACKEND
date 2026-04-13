@@ -24,13 +24,13 @@ export function sapTimestampToDate(s) {
    );
 }
 
-export function sapTimestampUtcToIstDate(s) {
-  const d = sapTimestampToDate(s);
-  if (!d) return null;
+// export function sapTimestampUtcToIstDate(s) {
+//   const d = sapTimestampToDate(s);
+//   if (!d) return null;
 
-  // Add 5 hours 30 minutes to convert UTC timestamp to IST
-  return new Date(d.getTime() + (5 * 60 + 30) * 60 * 1000);
-}
+//   // Add 5 hours 30 minutes to convert UTC timestamp to IST
+//   return new Date(d.getTime() + (5 * 60 + 30) * 60 * 1000);
+// }
 
 
 export function sapTimestampUtcToDate(s) {
@@ -65,8 +65,8 @@ export function parseSapEvent(ev) {
     ETA: sapTimestampToDate(ev.ETA),
     Discrepency: ev.Discrepency ?? null,
     Items: ev.Items ? JSON.stringify(ev.Items) : null,
-    ActualReportedTime: sapTimestampUtcToIstDate(ev.Timestamp),
-    PlannedTime: sapTimestampUtcToIstDate(ev.PlanTimestamp),
+    ActualReportedTime: sapTimestampUtcToDate(ev.Timestamp),
+    PlannedTime: sapTimestampUtcToDate(ev.PlanTimestamp),
     Latitude: ev.Latitude ? Number(ev.Latitude) : null,
     Longitude: ev.Longitude ? Number(ev.Longitude) : null,
     Location: ev.Location
