@@ -149,7 +149,22 @@ router.get("/tracking/history", async (req, res) => {
     }
 
 
-    const rows = result.recordset.reverse().map((row) => ({
+    const sessionRowsDesc = [];
+    let prevTs = null;
+
+    for (const row of result.recordset) {
+      const ts = Number(row.Timestamp);
+      if (!Number.isFinite(ts)) continue;
+
+      if (prevTs !== null && prevTs - ts > LIVE_STALE_MS) {
+        break;
+      }
+
+      sessionRowsDesc.push(row);
+      prevTs = ts;
+    }
+
+    const rows = sessionRowsDesc.reverse().map((row) => ({
       FoId: row.Fold,
       DriverId: row.DriverId,
       Latitude: row.Latitude,
@@ -158,7 +173,10 @@ router.get("/tracking/history", async (req, res) => {
       Timestamp: Number(row.Timestamp),
       Speed: row.Speed,
       Bearing: row.Bearing,
-    }));
+  }));
+
+  return res.json(rows);
+
 
     return res.json(rows);
   } catch (e) {
