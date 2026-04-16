@@ -185,6 +185,8 @@ export async function syncAndGetEventsByFoId(foId) {
     return {
       id: `${e.FoId || foId}|${e.StopId || ""}|${ev.Timestamp || ev.PlanTimestamp || index}`,
       ...e,
+          PlannedTime: ev.PlanTimestamp ?? null,
+
     };
   });
 
