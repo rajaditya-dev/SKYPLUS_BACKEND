@@ -1,9 +1,7 @@
-import axios from "axios";
 import sql from "mssql";
 import { getPool } from "../config/db.js";
 import { parseFinalInfo, sapTimestampToDate } from "./tmParser.service.js";
-
-const SAP_BASE = process.env.SAP_BASE_URL;
+import { sapRequest } from "./sapClient.service.js";
 
 /* ===================== HELPERS ===================== */
 
@@ -32,15 +30,11 @@ export async function syncTMToAzure() {
 
   console.log("🚀 STEP 1: Syncing SearchFOSet (TM → Azure)");
 
-  const tmRes = await axios.get(
-    `${SAP_BASE}/SearchFOSet?$format=json`,
-    {
-      headers: {
-        Authorization: `Basic ${process.env.SAP_BASIC}`,
-        Accept: "application/json"
-      }
-    }
-  );
+  const tmRes = await sapRequest({
+    method: "GET",
+    url: "/SearchFOSet",
+    params: { "$format": "json" },
+  });
 
   const fos = tmRes.data?.d?.results ?? [];
   console.log("📦 TM Freight Orders fetched:", fos.length);
@@ -141,15 +135,14 @@ const sapFoId = String(foId).padStart(22, "0");
 console.log("☁️ SKY SAP FoId:", sapFoId);
 console.log("🔧 SKY SQL FoId:", normalizedFoId);
 
-const res = await axios.get(
-  `${SAP_BASE}/SkyPlusFieldsSet?$filter=FoId eq '${sapFoId}'&$format=json`,
-  {
-    headers: {
-      Authorization: `Basic ${process.env.SAP_BASIC}`,
-      Accept: "application/json"
-    }
-  }
-);
+const res = await sapRequest({
+  method: "GET",
+  url: "/SkyPlusFieldsSet",
+  params: {
+    "$filter": `FoId eq '${sapFoId}'`,
+    "$format": "json",
+  },
+});
 
 
   const sky = res.data?.d?.results?.[0];

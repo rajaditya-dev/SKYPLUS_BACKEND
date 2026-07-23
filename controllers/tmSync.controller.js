@@ -1,6 +1,50 @@
 import { syncTMToAzure } from "../services/tmToAzure.service.js";
+import {
+  getSapConfigurationStatus,
+  sapRequest,
+  summarizeSapError,
+} from "../services/sapClient.service.js";
 
-export async function runTMSync(req, res) {
-  const result = await syncTMToAzure();
-  res.json(result);
+export async function runTMSync(_req, res) {
+  try {
+    const result = await syncTMToAzure();
+    return res.json(result);
+  } catch (error) {
+    const details = summarizeSapError(error);
+    console.error("Manual TM sync failed", details);
+    return res.status(details.status === 401 ? 401 : 502).json({
+      success: false,
+      error: details.status === 401 ? "SAP authentication failed" : "TM synchronization failed",
+      sapStatus: details.status,
+    });
+  }
+}
+
+export async function getSapHealth(_req, res) {
+  const configuration = getSapConfigurationStatus();
+
+  try {
+    const response = await sapRequest({
+      method: "GET",
+      url: "/$metadata",
+      headers: { Accept: "application/xml" },
+    });
+
+    return res.json({
+      ok: true,
+      sapStatus: response.status,
+      configuration,
+    });
+  } catch (error) {
+    const details = summarizeSapError(error);
+    return res.status(503).json({
+      ok: false,
+      sapStatus: details.status,
+      error:
+        details.status === 401
+          ? "SAP rejected the configured credentials"
+          : details.message,
+      configuration,
+    });
+  }
 }
