@@ -11,8 +11,6 @@ import eventsRoutes from "./routes/Events.js";
 import shipmentEventsRoutes from "./routes/shipmentEvents.js";
 import trackingHeaderRoutes from "./routes/ShipmentEventsHeader.js";
 import uiFieldConfigRoutes from "./routes/ui-fields-config.js";
-//import eventsRoutes from "./routes/eventsRoutes.js";
-import Events from "./routes/Events.js";
 import tmSyncRoutes from "./routes/tmSync.routes.js";
 import trackingRoutes from "./routes/tracking.routes.js";
 
@@ -44,7 +42,6 @@ app.use("/api/", shipmentEventsRoutes);
 app.use("/api/", trackingHeaderRoutes);
 app.use("/api/events", eventsRoutes);
 app.use("/api/", uiFieldConfigRoutes);
-app.use("/api/", Events);
 // 🔹 NEW ROUTES REGISTERED
 app.use("/api/", tmSyncRoutes);
 app.use("/api", skyRoutes);

@@ -34,13 +34,23 @@ async function fetchCsrf() {
   };
 }
 export async function fetchEventsReportingSet(foId) {
-  const url =
-    `${SAP_BASE}/EventsReportingSet?$filter=FoId eq '${foId}'&$format=json`;
+  const escapedFoId = String(foId).replace(/'/g, "''");
+  const params = new URLSearchParams({
+    "$filter": `FoId eq '${escapedFoId}'`,
+    "$format": "json",
+  });
+  if (SAP_CLIENT) {
+    params.set("sap-client", SAP_CLIENT);
+  }
+
+  const url = `${SAP_BASE}/EventsReportingSet?${params.toString()}`;
 
   const response = await axios.get(url, {
+    timeout: 15000,
     headers: {
       Authorization: `Basic ${process.env.SAP_BASIC}`,
-      Accept: "application/json"
+      Accept: "application/json",
+      ...(SAP_CLIENT ? { "sap-client": SAP_CLIENT } : {}),
     }
   });
 
