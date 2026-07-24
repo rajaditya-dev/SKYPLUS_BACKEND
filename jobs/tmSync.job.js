@@ -3,6 +3,7 @@ import { syncTMToAzure } from "../services/tmToAzure.service.js";
 import { summarizeSapError } from "../services/sapClient.service.js";
 
 let syncRunning = false;
+let schedulerStarted = false;
 
 async function runScheduledSync() {
   if (syncRunning) {
@@ -25,9 +26,17 @@ async function runScheduledSync() {
   }
 }
 
-// Preserve the original behavior: always sync every two minutes.
-cron.schedule("*/2 * * * *", runScheduledSync);
-console.log("TM sync scheduler enabled", {
-  pid: process.pid,
-  schedule: "*/2 * * * *",
-});
+export function startTMSyncScheduler() {
+  if (schedulerStarted) {
+    return;
+  }
+
+  schedulerStarted = true;
+
+  // Preserve the original behavior: always sync every two minutes.
+  cron.schedule("*/2 * * * *", runScheduledSync);
+  console.log("TM sync scheduler enabled", {
+    pid: process.pid,
+    schedule: "*/2 * * * *",
+  });
+}
