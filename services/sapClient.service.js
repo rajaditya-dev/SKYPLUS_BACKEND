@@ -39,21 +39,54 @@ function assertSapConfiguration() {
 export async function sapRequest(config) {
   assertSapConfiguration();
 
-  return axios.request({
-    baseURL: SAP_BASE_URL,
-    timeout: 15000,
-    ...config,
-    params: {
-      ...(config.params || {}),
-      ...(SAP_CLIENT ? { "sap-client": SAP_CLIENT } : {}),
-    },
-    headers: {
-      Authorization: `Basic ${SAP_BASIC}`,
-      Accept: "application/json",
-      ...(SAP_CLIENT ? { "sap-client": SAP_CLIENT } : {}),
-      ...(config.headers || {}),
-    },
+  const requestId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const startedAt = Date.now();
+  const method = String(config.method || "GET").toUpperCase();
+  const path = String(config.url || "");
+
+  console.log("SAP request started", {
+    requestId,
+    method,
+    path,
+    client: SAP_CLIENT,
   });
+
+  try {
+    const response = await axios.request({
+      baseURL: SAP_BASE_URL,
+      timeout: 15000,
+      ...config,
+      params: {
+        ...(config.params || {}),
+        ...(SAP_CLIENT ? { "sap-client": SAP_CLIENT } : {}),
+      },
+      headers: {
+        Authorization: `Basic ${SAP_BASIC}`,
+        Accept: "application/json",
+        ...(SAP_CLIENT ? { "sap-client": SAP_CLIENT } : {}),
+        ...(config.headers || {}),
+      },
+    });
+
+    console.log("SAP request completed", {
+      requestId,
+      method,
+      path,
+      status: response.status,
+      durationMs: Date.now() - startedAt,
+    });
+    return response;
+  } catch (error) {
+    console.error("SAP request failed", {
+      requestId,
+      method,
+      path,
+      status: error.response?.status ?? null,
+      code: error.code ?? null,
+      durationMs: Date.now() - startedAt,
+    });
+    throw error;
+  }
 }
 
 export function summarizeSapError(error) {

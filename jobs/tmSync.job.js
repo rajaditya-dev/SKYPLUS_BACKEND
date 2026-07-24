@@ -2,7 +2,6 @@ import cron from "node-cron";
 import { syncTMToAzure } from "../services/tmToAzure.service.js";
 import { summarizeSapError } from "../services/sapClient.service.js";
 
-const syncEnabled = process.env.TM_SYNC_ENABLED === "true";
 let syncRunning = false;
 
 async function runScheduledSync() {
@@ -26,9 +25,9 @@ async function runScheduledSync() {
   }
 }
 
-if (syncEnabled) {
-  cron.schedule("*/2 * * * *", runScheduledSync);
-  console.log("TM sync scheduler enabled", { pid: process.pid });
-} else {
-  console.log("TM sync scheduler disabled", { pid: process.pid });
-}
+// Preserve the original behavior: always sync every two minutes.
+cron.schedule("*/2 * * * *", runScheduledSync);
+console.log("TM sync scheduler enabled", {
+  pid: process.pid,
+  schedule: "*/2 * * * *",
+});

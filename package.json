@@ -4,10 +4,11 @@
   "description": "",
   "type": "module",
   "main": "index.js",
-"scripts": {
-  "start": "node index.js"
-}
-,
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "diagnose": "node scripts/diagnose.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
