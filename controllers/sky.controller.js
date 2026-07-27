@@ -1,7 +1,7 @@
 //backend/controllers/sky.controller.js
 import { postDelayToTM, postPODToTM,postUnloadingToTM } from "../services/tm.service.js";
 import { postEventToTM } from "../services/tm.service.js";
-import { updateSkyByFoId } from "../services/tmToAzure.service.js";
+import { fetchAndCacheSkyPlusFo } from "../services/skyPlusLookup.service.js";
 export async function receiveEvent(req, res) {
   try {
     const { FoId, Action,StopId,Longitude,Latitude } = req.body;
@@ -93,15 +93,39 @@ export async function updateSkyForFo(req, res) {
       return res.status(400).json({ message: "FoId is required" });
     }
 
-    const result = await updateSkyByFoId(foId);
+    const result = await fetchAndCacheSkyPlusFo(foId);
 
     return res.json({
       success: true,
       foId,
-      updated: result.updated
+      updated: true,
+      freightOrder: result,
     });
   } catch (err) {
     console.error("Sky update failed:", err.message);
-    return res.status(500).json({ error: err.message });
+    const status = err.statusCode || (err.response?.status === 404 ? 404 : 502);
+    return res.status(status).json({ error: err.message });
+  }
+}
+
+export async function searchSkyPlusFo(req, res) {
+  try {
+    const freightOrder = await fetchAndCacheSkyPlusFo(req.params.foId);
+    return res.json({
+      success: true,
+      source: "tm",
+      freightOrder,
+    });
+  } catch (err) {
+    console.error("SkyPlus lookup failed:", {
+      foId: req.params.foId,
+      message: err.message,
+      status: err.response?.status ?? err.statusCode ?? null,
+    });
+    const status = err.statusCode || (err.response?.status === 404 ? 404 : 502);
+    return res.status(status).json({
+      success: false,
+      error: status === 502 ? "Unable to retrieve the container from TM" : err.message,
+    });
   }
 }
