@@ -1,24 +1,8 @@
-import { syncTMToAzure } from "../services/tmToAzure.service.js";
 import {
   getSapConfigurationStatus,
   sapRequest,
   summarizeSapError,
 } from "../services/sapClient.service.js";
-
-export async function runTMSync(_req, res) {
-  try {
-    const result = await syncTMToAzure();
-    return res.json(result);
-  } catch (error) {
-    const details = summarizeSapError(error);
-    console.error("Manual TM sync failed", details);
-    return res.status(details.status === 401 ? 401 : 502).json({
-      success: false,
-      error: details.status === 401 ? "SAP authentication failed" : "TM synchronization failed",
-      sapStatus: details.status,
-    });
-  }
-}
 
 export async function getSapHealth(_req, res) {
   const configuration = getSapConfigurationStatus();

@@ -60,8 +60,8 @@ async function checkSap() {
 
 console.log("SkyPlus dependency diagnostics");
 console.log("Scheduler configuration", {
-  enabled: true,
-  schedule: "*/2 * * * *",
+  enabled: false,
+  mode: "on-demand single-FO lookup",
 });
 console.log("SAP configuration", getSapConfigurationStatus());
 
